@@ -1,8 +1,8 @@
 {
     "HostedZone": {
-        "Id": "/hostedzone/Z1J4PR9A2O6EUI",
-        "Name": "pleasantjams.ca.",
-        "CallerReference": "35FD00B3-5E28-6FAF-9E1A-96A5E58ACD8A",
+        "Id": "/hostedzone/Z2XHBKAJC40VY8",
+        "Name": "omnomnomi.ca.",
+        "CallerReference": "CFBB9845-1C7D-FAFD-A8A1-7AAEA910430D",
         "Config": {
             "PrivateZone": false
         },
@@ -10,10 +10,10 @@
     },
     "DelegationSet": {
         "NameServers": [
-            "ns-1529.awsdns-63.org",
-            "ns-792.awsdns-35.net",
-            "ns-507.awsdns-63.com",
-            "ns-1765.awsdns-28.co.uk"
+            "ns-162.awsdns-20.com",
+            "ns-582.awsdns-08.net",
+            "ns-1640.awsdns-13.co.uk",
+            "ns-1451.awsdns-53.org"
         ]
     }
 }
