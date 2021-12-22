@@ -1,0 +1,53 @@
+{
+    "ResourceRecordSets": [
+        {
+            "Name": "pleasantjams.ca.",
+            "Type": "A",
+            "TTL": 300,
+            "ResourceRecords": [
+                {
+                    "Value": "52.32.130.234"
+                }
+            ]
+        },
+        {
+            "Name": "pleasantjams.ca.",
+            "Type": "NS",
+            "TTL": 172800,
+            "ResourceRecords": [
+                {
+                    "Value": "ns-1529.awsdns-63.org."
+                },
+                {
+                    "Value": "ns-792.awsdns-35.net."
+                },
+                {
+                    "Value": "ns-507.awsdns-63.com."
+                },
+                {
+                    "Value": "ns-1765.awsdns-28.co.uk."
+                }
+            ]
+        },
+        {
+            "Name": "pleasantjams.ca.",
+            "Type": "SOA",
+            "TTL": 900,
+            "ResourceRecords": [
+                {
+                    "Value": "ns-1529.awsdns-63.org. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400"
+                }
+            ]
+        },
+        {
+            "Name": "www.pleasantjams.ca.",
+            "Type": "A",
+            "TTL": 300,
+            "ResourceRecords": [
+                {
+                    "Value": "52.32.130.234"
+                }
+            ]
+        }
+    ]
+}

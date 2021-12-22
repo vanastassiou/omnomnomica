@@ -1,0 +1,19 @@
+{
+    "HostedZone": {
+        "Id": "/hostedzone/Z1J4PR9A2O6EUI",
+        "Name": "pleasantjams.ca.",
+        "CallerReference": "35FD00B3-5E28-6FAF-9E1A-96A5E58ACD8A",
+        "Config": {
+            "PrivateZone": false
+        },
+        "ResourceRecordSetCount": 4
+    },
+    "DelegationSet": {
+        "NameServers": [
+            "ns-1529.awsdns-63.org",
+            "ns-792.awsdns-35.net",
+            "ns-507.awsdns-63.com",
+            "ns-1765.awsdns-28.co.uk"
+        ]
+    }
+}
