@@ -15,9 +15,9 @@ What I know/remember about this site without additional discovery:
   * Better way to learn AWS than going with my domain registrar
 * Site certificates provided by an auto-renewing Let's Encrypt script
   * Something broke the script earlier this year and I haven't cared enough to fix it
-    * Guess I wil now
+    * Guess I will now
 
-## Take backups
+### Take backups
 * Re-enabled MFA on my AWS root account, as I wanted to back its key up to my password manager 
   * It's been so long that I still had the old AWS logo (not the blue smile one, the yellow one) on my phone app for the token
 * Imported EC2 instance key from backup to my dev machine
@@ -30,7 +30,7 @@ What I know/remember about this site without additional discovery:
   * DB dump file
   * `omnomnomi.ca*.conf` files from `/etc/apache2/sites-available/`
 
-## Inventory existing resources
+### Inventory existing resources
 * Initial exploration was the simple way via console
 * Current infra consists of:
   * One [VPC](https://aws.amazon.com/vpc/) containing:
@@ -55,12 +55,12 @@ What I know/remember about this site without additional discovery:
   ```
   * I don't actually know if that's all the relevant resources, but it passes a sanity check
 
-## Write Terraform config to prep for resource import
+### Write Terraform config to prep for resource import
 * Updated Terraform version to newest
   * While I'm at it, turned it into a script
 * Added empty files corresponding to different resource types and necessary varfiles to avoid temptation to make one giant file
 
-## Misc notes, gotchas, questions, and follow-up intentions
+### Misc notes, gotchas, questions, and follow-up intentions
 * Needed to set up `~/.ssh/config` to use passwordless keyfile authentication with `rsync`:
   ```
   Host my_ec2_instance_dns_name
@@ -70,15 +70,18 @@ What I know/remember about this site without additional discovery:
   * `rsync` daemon does **not** encrypt data in transit by default
   * To `rsync` using encryption, specify a communications protocol in your command invocation like `rsync -e ssh <SOURCE> <DESTINATION>`
 * EC2 instances are created with no password auth permitted ([see discussion](https://serverfault.com/questions/334448/why-is-ssh-password-authentication-a-security-risk))
-  * If you really really want to allow password auth
+  * If you really really want to allow password auth:
     * Add new local users with `passwd`
     * Update `/etc/sshd_config` with `PasswordAuthentication yes`
-      * If you want root to be able to password auth, update: `PermitRootLogin` to `yes`
-* I don't remember having had to do manually st up AWS CLI tab completion before; was that because I was using AWS CLIv1 and this is v2?
+      * If you want root to be able to password auth, update `PermitRootLogin` to `yes`
+* I don't remember having had to do manually set up AWS CLI tab completion before
+  * Was that because I was using AWS CLIv1 and this is v2?
+    * Do I care enough to test?
+      * Not really
 * The info I got about my existing infrastructure is a lot more than I expected to get for such a simple infrastructure
   * I am coming to the uncomfortable realization that the way I did it is only feasible because I have advance knowledge of:
     * Which resources exist (thanks to having created them)
-    * Which implicit or dependent resources accompany them (because I know to look for them due to prior AWS experience)
+    * Which implicit or dependent resources accompany them (because I know to look for them due to prior AWS experience, including AWS-SA2 exam prep)
   * The above isn't feasible discovery in an environment I'm brand new to
   * #TODO: Find or design an AWS CLI script or first-party console utility that does what I tried to do today for discovery, but more comprehensively
 * I created `terraform-dev` with programmatic access only, but I didn't check to see what's needed for the ability to switch roles in the web console
@@ -86,5 +89,30 @@ What I know/remember about this site without additional discovery:
 ## 2021-12-23
 
 ### Write Terraform config (continued)
-  
-### Test Terraform config
+* Copied the infra info I queried the other day into the appropriate-looking infra config files for translation into Terraform
+  * Grabbed details for `terraform-dev` IAM user since I hadn't done that yesterday
+  * Didn't actually turn out to be that interesting
+* Realized a no-downtime import with zero changes at all needs to be approached differently from a config that allows for a small amount of downtime
+  * What do I actually _need_ saved for this phase?
+    * Persist the EBS instance and ensure it remains attached to the EC2 instance
+    * Maintain an A record pointing my domain name to the EC2 instance's public IP address
+    * Script the Wordpress installation, DB config and import, and Let's Encrypt script, and deploy after instance is up
+* I imported these and it looks like both the EC2 instance and the boot volume are just being updated in place when I run `terraform plan`: `aws_ebs_volume.web_boot` `aws_instance.web`
+
+
+
+### Misc notes, gotchas, questions, and follow-up intentions
+* Why isn't autocomplete _automatically completing_?
+  * I have to run `complete -C '/usr/local/bin/aws_completer' aws` on each new shell start (added it to `~/.bashrc`)
+  * Again, I don't recall having had to do that in WSL during my last project
+* I really like that `Shift + Ctrl + Alt` multi-line cursor trick in VS Code
+* **Big problem:** I honestly really hate this idea because no one uses AWS like this, especially not for WordPress, and I just don't believe in the goal
+  * [This blog](https://www.codeinwp.com/blog/serverless-wordpress-shifter-vs-hardypress-top-headless-wordpress-hosting-options-compared/) says serverless WordPress is possible
+    * You can't have dynamic content: comments, forums, membership, contact forms, search
+      * I don't care at all about any of those things except the search
+      * Can probably add a Google Search widget to fix it
+    * Site will need to be reconverted every time there's a change made
+  * [This blog](https://keita.blog/2019/06/27/serverless-wordpress-on-aws-lambda/) says serverless Wordpress is possible
+* I'm still not going to give up on this exercise because the _point_ of this phase is to play around with imports, not generate a serverless blog
+
+## 2022-01-04: TBD
