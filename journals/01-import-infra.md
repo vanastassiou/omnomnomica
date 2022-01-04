@@ -98,8 +98,11 @@ What I know/remember about this site without additional discovery:
     * Maintain an A record pointing my domain name to the EC2 instance's public IP address
     * Script the Wordpress installation, DB config and import, and Let's Encrypt script, and deploy after instance is up
 * I imported these and it looks like both the EC2 instance and the boot volume are just being updated in place when I run `terraform plan`: `aws_ebs_volume.web_boot` `aws_instance.web`
+  * Do I dare `apply` right now, the day before my Xmas vacation starts? Probably not
 
-
+### Update scripts
+* Added scripts to install/update Terraform and plan a deployment
+  * As of this writing, the plan updates the EC2 instance and boot volumes in place, and creates a new Route53 zone with an A record
 
 ### Misc notes, gotchas, questions, and follow-up intentions
 * Why isn't autocomplete _automatically completing_?
@@ -116,3 +119,14 @@ What I know/remember about this site without additional discovery:
 * I'm still not going to give up on this exercise because the _point_ of this phase is to play around with imports, not generate a serverless blog
 
 ## 2022-01-04: TBD
+* Prep thoughts after winter break
+  * Current infra updates EC2 instance and boot volumes in place, creates new Route53 zone with A record
+  * Sounds pretty good to me at this point, especially as I still have the updates of the actual site
+  * TODO: set up backup script that dumps DB and WP PHP files and sends files to S3
+    * Not elegant but that's fine for now
+  * Today:
+    * Write script to do `terraform apply` with the necessary flags, test the apply
+    * Test plan/apply
+    * Write backup/dump and restore scripts
+    * Figure out how to implement backup and restore scripts as part of automated process that *isn't* part of the cloud infra
+  
