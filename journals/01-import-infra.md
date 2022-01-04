@@ -134,7 +134,7 @@ What I know/remember about this site without additional discovery:
   * Can use TF's [`file`](https://www.terraform.io/language/resources/provisioners/file) and [`remote-exec`](https://www.terraform.io/language/resources/provisioners/remote-exec) provisioners to run a post-install script
     * "Provisioners should only be used as a last resort" says the doc and refers you to [the main Provisioners page](https://www.terraform.io/language/resources/provisioners) for more info, but doesn't explain why
     * Probably the issue is the state of the machine's config is not trackable this way, so Terraform's strength is useless here
-      * # TODO: refactor this using Ansible or Puppet in future phase of project
+      * #TODO: refactor this using Ansible or Puppet in future phase of project
 * Wrote `restore-website.sh` anyway, with the above limitations in mind
   * Need to make sure that the script, if run in place, doesn't *append* any data when re-injecting it into the appropriate places, just *overwrites* it
   * Changed the AMI from the ancient Ubuntu one to the most updated one; why?
@@ -143,3 +143,32 @@ What I know/remember about this site without additional discovery:
     * Per the [Ubuntu Amazon EC2 AMI locator](https://cloud-images.ubuntu.com/locator/ec2/), I should be using `ami-078278691222aee06` or `ami-0892d3c7ee96c0bf7` for my region for 20.04 LTS
       * This will force instance destruction and re-creation
       * Goodbye, ancient cloud instance!
+* Ran into this problem when pushing the backups zip:
+  ```bash
+  remote: error: Trace: 4fab61c08909b9bfb49e66b6e1b12e89aeacae6b641844327dde2800c2ab9ab1
+  remote: error: See http://git.io/iEPt8g for more information.
+  remote: error: File backups/omnomnomica.zip is 659.85 MB; this exceeds GitHub's file size limit of 100.00 MB
+  remote: error: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.
+  To github.com:vanastassiou/omnomnomica.git
+  ! [remote rejected] import-existing-infra -> import-existing-infra (pre-receive hook declined)
+  error: failed to push some refs to 'git@github.com:vanastassiou/omnomnomica.git'
+  ```
+  * I can get around this by breaking the zip down into multiple different directories, but I'm not going to, because:
+    * Tedious
+    * Prone to human error in creating, uploading, extracting processes
+    * Don't get to learn anything new
+  * [Git LFS](https://git-lfs.github.com/) to the rescue:
+    ```bash
+    # See doc at https://github.com/git-lfs/git-lfs/blob/main/docs/man/git-lfs-migrate.1.ronn
+    sudo apt install git-lfs
+    git lfs install
+    git lfs migrate info
+    git lfs migrate import --include="*.zip"
+    ```
+* What next? Create a backup script, I guess
+  * Typical way to do it is `cron` job with `rsync`
+  * Where's the backup location going to be, though?
+
+### Misc notes, gotchas, questions, and follow-up intentions
+* TIL [`ronn`](https://rtomayko.github.io/ronn/ronn.1.html)
+* Using constants/variables/other names in scripts and config vs hard-coded values really does make it a lot easier to understand what the script/conf is trying to do
