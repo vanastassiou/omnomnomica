@@ -122,11 +122,24 @@ What I know/remember about this site without additional discovery:
 * Prep thoughts after winter break
   * Current infra updates EC2 instance and boot volumes in place, creates new Route53 zone with A record
   * Sounds pretty good to me at this point, especially as I still have the updates of the actual site
-  * TODO: set up backup script that dumps DB and WP PHP files and sends files to S3
+  * # TODO: set up backup script that dumps DB and WP PHP files and sends files to S3
     * Not elegant but that's fine for now
   * Today:
     * Write script to do `terraform apply` with the necessary flags, test the apply
     * Test plan/apply
     * Write backup/dump and restore scripts
     * Figure out how to implement backup and restore scripts as part of automated process that *isn't* part of the cloud infra
-  
+* Confirmed that plan/apply do work to preserve the existing state of the website (i.e. resources have been successfully imported)
+  * However, this infra isn't very useful for redeploying the entire thing
+  * Can use TF's [`file`](https://www.terraform.io/language/resources/provisioners/file) and [`remote-exec`](https://www.terraform.io/language/resources/provisioners/remote-exec) provisioners to run a post-install script
+    * "Provisioners should only be used as a last resort" says the doc and refers you to [the main Provisioners page](https://www.terraform.io/language/resources/provisioners) for more info, but doesn't explain why
+    * Probably the issue is the state of the machine's config is not trackable this way, so Terraform's strength is useless here
+      * # TODO: refactor this using Ansible or Puppet in future phase of project
+* Wrote `restore-website.sh` anyway, with the above limitations in mind
+  * Need to make sure that the script, if run in place, doesn't *append* any data when re-injecting it into the appropriate places, just *overwrites* it
+  * Changed the AMI from the ancient Ubuntu one to the most updated one; why?
+    * I need the most recent Ubuntu for the packages to support the software I want
+    * Upgrading Ubuntu requires a system restart and I expect this to cause a timeout if I `remote exec` this as part of provisioning the EC2 instance
+    * Per the [Ubuntu Amazon EC2 AMI locator](https://cloud-images.ubuntu.com/locator/ec2/), I should be using `ami-078278691222aee06` or `ami-0892d3c7ee96c0bf7` for my region for 20.04 LTS
+      * This will force instance destruction and re-creation
+      * Goodbye, ancient cloud instance!
