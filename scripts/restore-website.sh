@@ -12,10 +12,6 @@ if [[ ! -e $BACKUPS_DIR ]]; then
 fi
 
 TEMP_DIR="/tmp/"
-
-AWS_ACCESS_KEY_ID=""
-AWS_SECRET_ACCESS_KEY=""
-AWS_DEFAULT_REGION="us-west-2"
 S3_BUCKET_NAME="omnomnomica-backups"
 
 WEBSITE_DOMAIN="omnomnomi.ca"
