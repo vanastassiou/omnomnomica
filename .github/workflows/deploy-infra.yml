@@ -1,0 +1,21 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Deploy Omnomnomica to dev
+
+on:
+  pull_request:
+    branches: [ dev ]
+
+jobs:
+  env:
+    AWS_ACCESS_KEY_ID: '${{ secrets.S3_USER_AWS_ACCESS_KEY_ID }}'
+    AWS_SECRET_ACCESS_KEY: '${{ secrets.S3_USER_AWS_SECRET_ACCESS_KEY }}'
+    AWS_DEFAULT_REGION: 'us-west-2'
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Terraform plan
+        run: ./scripts/plan.sh
+      - name: Terraform apply
+        run: ./scripts/apply.sh
