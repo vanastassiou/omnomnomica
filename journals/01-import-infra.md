@@ -118,17 +118,19 @@ What I know/remember about this site without additional discovery:
   * [This blog](https://keita.blog/2019/06/27/serverless-wordpress-on-aws-lambda/) says serverless Wordpress is possible
 * I'm still not going to give up on this exercise because the _point_ of this phase is to play around with imports, not generate a serverless blog
 
-## 2022-01-04: TBD
-* Prep thoughts after winter break
-  * Current infra updates EC2 instance and boot volumes in place, creates new Route53 zone with A record
-  * Sounds pretty good to me at this point, especially as I still have the updates of the actual site
-  * # TODO: set up backup script that dumps DB and WP PHP files and sends files to S3
-    * Not elegant but that's fine for now
-  * Today:
-    * Write script to do `terraform apply` with the necessary flags, test the apply
-    * Test plan/apply
-    * Write backup/dump and restore scripts
-    * Figure out how to implement backup and restore scripts as part of automated process that *isn't* part of the cloud infra
+## 2022-01-04: Welcome back to work
+### Prep thoughts after winter break
+* Current infra updates EC2 instance and boot volumes in place, creates new Route53 zone with A record
+* Sounds pretty good to me at this point, especially as I still have the updates of the actual site
+* # TODO: set up backup script that dumps DB and WP PHP files and sends files to S3
+  * Not elegant but that's fine for now
+* Today:
+  * Write script to do `terraform apply` with the necessary flags, test the apply
+  * Test plan/apply
+  * Write backup/dump and restore scripts
+  * Figure out how to implement backup and restore scripts as part of automated process that *isn't* part of the cloud infra
+
+### Planning and implementing the restore script
 * Confirmed that plan/apply do work to preserve the existing state of the website (i.e. resources have been successfully imported)
   * However, this infra isn't very useful for redeploying the entire thing
   * Can use TF's [`file`](https://www.terraform.io/language/resources/provisioners/file) and [`remote-exec`](https://www.terraform.io/language/resources/provisioners/remote-exec) provisioners to run a post-install script
@@ -143,7 +145,7 @@ What I know/remember about this site without additional discovery:
     * Per the [Ubuntu Amazon EC2 AMI locator](https://cloud-images.ubuntu.com/locator/ec2/), I should be using `ami-078278691222aee06` or `ami-0892d3c7ee96c0bf7` for my region for 20.04 LTS
       * This will force instance destruction and re-creation
       * Goodbye, ancient cloud instance!
-* Ran into this problem when pushing the backups zip:
+* Ran into this problem when pushing the backups zip (manually):
   ```bash
   remote: error: Trace: 4fab61c08909b9bfb49e66b6e1b12e89aeacae6b641844327dde2800c2ab9ab1
   remote: error: See http://git.io/iEPt8g for more information.
@@ -165,10 +167,15 @@ What I know/remember about this site without additional discovery:
     git lfs migrate info
     git lfs migrate import --include="*.zip"
     ```
-* What next? Create a backup script, I guess
-  * Typical way to do it is `cron` job with `rsync`
-  * Where's the backup location going to be, though?
+### Planning and implementing backup script
+* Typical way to do it is `cron` job with `rsync` (consult [tutorial](https://www.jveweb.net/en/archives/2011/02/using-rsync-and-cron-to-automate-incremental-backups.html))
+* Can't `rsync` directly to an S3 bucket, but can use an IAM user with RW access to S3 plus AWS CLI on the EC2 instance ([reference](https://serverfault.com/questions/754690/rsync-to-aws-s3-bucket))
+* I'm using `zip` to compress/archive to minimize storage and retrieval costs for S3, but I notice most advice to avoid zipping an absolute path is to manipulate the directory stack
+  * #TODO: see if other compression/archive utilities do this more gracefully 
 
 ### Misc notes, gotchas, questions, and follow-up intentions
 * TIL [`ronn`](https://rtomayko.github.io/ronn/ronn.1.html)
 * Using constants/variables/other names in scripts and config vs hard-coded values really does make it a lot easier to understand what the script/conf is trying to do
+
+## 2022-01-05: Test backup and restore, then `apply`
+* First: add way to automatically retrieve latest backup from S3 in `apply.sh`
