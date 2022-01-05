@@ -188,4 +188,31 @@ What I know/remember about this site without additional discovery:
 * Testing backup script
   * Need a way to verify backups
     * Verify file transfer to S3: compare sizes of local file to the one AWS received
-    * Verify integrity of dump and zip? #TODO
+    * Verify integrity of dump and zip?
+  * #TODO: Enhancement ideas for daily `cron` backup job:
+    * Implement diff between filesizes and proceed with S3 upload only if different
+      * Compare today's local files vs file sizes on s3
+        * This is already done, so make it a function
+    * Implement local cleanup of `/tmp` after verifying S3 upload
+    * Implement backup and restore logging
+    * Implement backups rotation schedule
+* Now to automate deployment
+  * Let's get this started with [GitHub Actions](https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#env)
+  * #TODO: during improvement phase, migrate to a CI/CD provider people actually use
+* Ended up creating `dev`, `test`, and `stage`, branches, and renamed my feature branch to prepend `feature/`
+
+
+### Misc notes, gotchas, questions, and follow-up intentions
+* I don't understand this behaviour:
+  ```bash
+  $ cd ${VHOST_FILE_LOCATION}
+  $ ls -la | grep ${WEBSITE_DOMAIN}
+  -rw-r--r-- 1 root root  724 May 16  2018 omnomnomi.ca.conf
+  -rw-r--r-- 1 root root  625 Jan  4 20:18 omnomnomi.ca-le-ssl.conf
+  $ zip -u "${TEMP_DIR}/${SITEFILES_ZIP}" "./${WEBSITE_DOMAIN}*"
+          zip warning: name not matched: ./omnomnomi.ca*
+  $ for name in "${WEBSITE_DOMAIN}*"; do zip -u "${TEMP_DIR}/${SITEFILES_ZIP}" $name; done
+    adding: omnomnomi.ca.conf (deflated 60%)
+    adding: omnomnomi.ca-le-ssl.conf (deflated 51%)
+  ```
+* I had to go back and rebase a commit because I grouped unrelated changes; [here's how I did it](https://stackoverflow.com/questions/1186535/how-to-modify-a-specified-commit/29950959#29950959)
