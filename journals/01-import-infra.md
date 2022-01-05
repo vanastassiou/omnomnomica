@@ -122,7 +122,7 @@ What I know/remember about this site without additional discovery:
 ### Prep thoughts after winter break
 * Current infra updates EC2 instance and boot volumes in place, creates new Route53 zone with A record
 * Sounds pretty good to me at this point, especially as I still have the updates of the actual site
-* # TODO: set up backup script that dumps DB and WP PHP files and sends files to S3
+* #TODO: set up backup script that dumps DB and WP PHP files and sends files to S3
   * Not elegant but that's fine for now
 * Today:
   * Write script to do `terraform apply` with the necessary flags, test the apply
@@ -178,4 +178,14 @@ What I know/remember about this site without additional discovery:
 * Using constants/variables/other names in scripts and config vs hard-coded values really does make it a lot easier to understand what the script/conf is trying to do
 
 ## 2022-01-05: Test backup and restore, then `apply`
-* First: add way to automatically retrieve latest backup from S3 in `apply.sh`
+* Need to implement automatically retrieving latest backup from S3 during `apply.sh`, then test backup and apply/restore
+* Next phase should add support for different deployment environments -- currently only using `vars.tfvars`
+* Testing restore script
+  * Set up passwordless auth for MySQL using `~/my.cnf`; using `-p` CLI option exposes the password in cleartext to any utilities that examine running processes (`proc`, `ps`)
+  * I kept getting the help text when I ran commands using `mysql -e -u root <COMMANDS>;`, meaning MySQL didn't like the syntax
+    * I got around this by using a heredoc ([source](https://gist.github.com/Wieljer/1b7a0573fd37abdef3c105deb306db62#file-setup_drupal-bash-L30)), which is tidier and DRYer
+    * #TODO: find out why `mysql -e -u root <COMMANDS>;` is invalid MySQL syntax
+* Testing backup script
+  * Need a way to verify backups
+    * Verify file transfer to S3: compare sizes of local file to the one AWS received
+    * Verify integrity of dump and zip? #TODO
