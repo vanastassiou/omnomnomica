@@ -7,4 +7,5 @@ cd ../infra
 
 terraform fmt -recursive
 terraform init
-terraform plan -refresh=true -out=./plans/$(date +%Y-%m-%d_%H-%M-%S).plan -input=false -var-file="./vars/vars.tfvars" 
+NEW_PLAN="./plans/$(date +%Y-%m-%d_%H-%M-%S).plan"
+terraform plan -refresh=true -out=${NEW_PLAN} -input=false -var-file="./vars/vars.tfvars" 
