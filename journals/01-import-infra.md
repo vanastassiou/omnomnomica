@@ -200,7 +200,7 @@ What I know/remember about this site without additional discovery:
   * Let's get this started with [GitHub Actions](https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#env)
   * #TODO: during improvement phase, migrate to a CI/CD provider people actually use
 * Ended up creating `dev`, `test`, and `stage`, branches, and renamed my feature branch to prepend `feature/`
-
+* Wrapped up the day by doing a big rebase to group trivial changes together and make commit messages more meaningful
 
 ### Misc notes, gotchas, questions, and follow-up intentions
 * I don't understand this behaviour:
@@ -216,3 +216,52 @@ What I know/remember about this site without additional discovery:
     adding: omnomnomi.ca-le-ssl.conf (deflated 51%)
   ```
 * I had to go back and rebase a commit because I grouped unrelated changes; [here's how I did it](https://stackoverflow.com/questions/1186535/how-to-modify-a-specified-commit/29950959#29950959)
+* I ran into [this issue with AWS CLI S3 file transfers over 500 MB getting a `Killed` message](https://github.com/aws/aws-cli/issues/1775); I worked around it by removing a couple of unnecessary large files, but the issue seems to be ongoing 
+  * I didn't want to lose focus and troubleshoot this, but this is a note in case it happens again in the future
+
+## 2022-01-06: OK, `apply` for real, this time
+* Tested backup and restore scripts on the command line of existing instance, and took backups to S3 as well as having local copies, so let's try an `apply` now
+* On `apply.sh`, got the following as a result of the EBS attachment needing to be replaced due to the instance re-creation:
+  ```bash
+  → ./apply.sh 
+  aws_volume_attachment.ebs_attachment: Destroying... [id=vai-2330037030]
+  ╷
+  │ Error: Failed to detach Volume ([REDACTED]) from Instance ([REDACTED]): IncorrectState: Unable to detach root volume '[REDACTED]' from instance '[REDACTED]'
+  │       status code: 400, request id: [REDACTED]
+  ```
+* Looks like [this issue here](https://github.com/hashicorp/terraform/issues/2957) might be related -- shutting down the EC2 instance as suggested helped
+* Next bump: forgot to add [provisioner connection details for the EC2 instance](https://www.terraform.io/language/resources/provisioners/connection)
+  * For development purposes only, I'm using a `data.local_file` resource reading the contents of a private keyfile
+    * #TODO: once this works, refactor to use `local-exec` with AWS CLI `ec2-instance-connect` to [send a temporary public key for this connection](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ec2-instance-connect/send-ssh-public-key.html)
+* This problem now:
+  ```bash
+  │ Error: file provisioner error
+  │ 
+  │   with aws_instance.web,
+  │   on compute.tf line 21, in resource "aws_instance" "web":
+  │   21:   provisioner "file" {
+  │ 
+  │ timeout - last error: dial tcp 18.237.16.124:22: i/o timeout
+  ╵
+  ```
+  * Looks like [this error](https://stackoverflow.com/questions/66462599/terraform-file-provisioner-cant-connect-ec2-over-ssh-timeout-last-error-dia), where the problem appeared to be a missing security group
+  * Fixed by importing the existing security groups, running `plan.sh`, and updating config blogs based on the resulting diffs
+* Now: `CannotDelete: the specified group: "sg-2b18b54d" name: "default" cannot be deleted by a user`
+  * Solution: don't change the attribute that forces deletion
+* Ran into `Package 'zip' has no installation candidate` when running restore script
+  * Apparently this is a known issue on AWS machines?
+  * Suggested solution: "the list of the package sources in AWS is populated by cloud-init, which takes...around 3-5 seconds so you can't notice it when doing stuff manually, but if there’s some automation, and the first thing it does is apt-get update, you can get in trouble. The solution is simple: wait for cloud init to finish. It’s got a helpful `cloud-init status --wait` command just for that." ([source](https://forum.gitlab.com/t/install-zip-unzip/13471/9))
+* Troubleshot `restore-website.sh` and got it to a point where Apache loads the site correctly, but I noticed I can't browse to the domain
+  * Turns out I hadn't imported the DNS zone and Terraform had created a second one of the same name (didn't know AWS allowed that)
+  * I just deleted the old one 
+    * That was dumb
+    * I should have imported it and deleted the new one
+      * Now my nameservers have changed and I have to update them with my domain registrar, and DNS propagation is annoying to wait for (I don't remember it taking more than a few minutes before)
+
+### Misc notes, gotchas, questions, and follow-up intentions
+* TIL [`terraform plan` output is not readable text by design](https://discuss.hashicorp.com/t/terraform-plan-write-out-is-not-readable-text/7568)
+  * Get around this by using `terraform show planname.plan` or `terraform show -no-color plans/2022-01-06_12-01-17.plan > plan.txt` to save to a file without weird `Esc` characters
+* `terraform import` followed by `terraform plan` and checking the diff is a great way to be told exactly which attributes are needed in your resource configuration
+
+## 2022-01-06: TBD
+* Need to replace references to local keyfiles with references to secrets in the GitHub Actions vault
