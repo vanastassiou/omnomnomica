@@ -76,10 +76,7 @@ sudo certbot --non-interactive --agree-tos -m vanastassiou+letsencrypt@gmail.com
 
 # Install prerequisites for WordPress
 
-sudo apt install -y php7.4-cli
-sudo apt install -y mysql-server
-
-MYSQL_ROOT_PASSWORD=$(sudo cat /etc/mysql/debian.cnf | grep -Po 'password = \K[^ ]+' | head -n 1)
+sudo apt install -y php libapache2-mod-php php-mysql mysql-server
 
 ## Extract existing values from wp-config.php
 WP_CONFIG_FILE="${APACHE_WEBSITE_DIR}/public_html/wp-config.php"
@@ -88,24 +85,6 @@ WP_DB_NAME=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_NAME', '\\K.*(?=')")
 WP_DB_PASSWORD=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_PASSWORD', '\\K.*(?=')")
 WP_DB_HOST=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_HOST', '\\K.*(?=')")
 WP_DB_CHARSET=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_CHARSET', '\\K.*(?=')")
-WP_DB_COLLATE=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_COLLATE', '\\K.*(?=')")
-
-## Configure ~/.my.cnf for passwordless log
-cat > ~/.my.cnf << MY_CONF
-[client]
-user=root
-password=${MYSQL_ROOT_PASSWORD}
-
-[client]
-user=${WP_DB_USER}
-password=${WP_DB_PASSWORD}
-
-[mysqldump]
-user=${WP_DB_USER}
-password=${WP_DB_PASSWORD}
-MY_CONF
-
-sudo chmod 600 ~/.my.cnf
 
 ## Create user and DB
 sudo mysql -u root << MYSQL_SETUP
