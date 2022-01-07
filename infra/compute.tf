@@ -22,6 +22,7 @@ resource "aws_vpc" "default" {
 }
 
 resource "aws_security_group" "default" {
+  name = "default"
   vpc_id      = aws_vpc.default.id
   description = "default VPC security group"
   egress = [
@@ -53,6 +54,8 @@ resource "aws_security_group" "default" {
 }
 
 resource "aws_security_group" "webserver" {
+  name = "web"
+  description = "Group for web access"
   vpc_id = aws_vpc.default.id
   egress = [
     {
