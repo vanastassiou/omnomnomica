@@ -26,8 +26,7 @@ APACHE_WEBSITE_DIR="/var/www/${WEBSITE_DOMAIN}"
 ## Reference:  https://forum.gitlab.com/t/install-zip-unzip/13471/9
 cloud-init status --wait
 
-sudo apt update
-sudo apt install -y zip unzip
+sudo apt update && sudo apt install -y zip unzip  >/dev/null 2>&1
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install --update
@@ -60,7 +59,7 @@ unzip "${BACKUPS_DIR}"/"${SITEFILES_BACKUP}" -d "${TEMP_DIR}"
 cp "${BACKUPS_DIR}"/"${DUMP_BACKUP}" "${TEMP_DIR}"
 
 # Set up Apache
-sudo apt install -y apache2
+sudo apt install -y apache2  >/dev/null 2>&1
 sudo mkdir -p "${APACHE_WEBSITE_DIR}"
 sudo mv "${TEMP_DIR}/public_html" "${APACHE_WEBSITE_DIR}/public_html"
 sudo mv "${TEMP_DIR}/${WEBSITE_DOMAIN}"*.conf "/etc/apache2/sites-available/"
@@ -72,7 +71,7 @@ sudo systemctl reload apache2
 
 # Install prerequisites for WordPress
 
-sudo apt install -y php libapache2-mod-php php-mysql mysql-server
+sudo apt install -y php libapache2-mod-php php-mysql mysql-server  >/dev/null 2>&1
 
 ## Extract existing values from wp-config.php
 WP_CONFIG_FILE="${APACHE_WEBSITE_DIR}/public_html/wp-config.php"
