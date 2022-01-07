@@ -136,6 +136,18 @@ resource "aws_instance" "web" {
     }
   }
 
+  provisioner "file" {
+    source      = "../scripts/lets-encrypt.sh"
+    destination = "/home/ubuntu/lets-encrypt.sh"
+
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = data.local_file.ec2_deployer_private_key.content
+      host        = aws_instance.web.public_ip
+    }
+  }
+
   # Upload and run script to install prerequisites and configure website
   provisioner "file" {
     source      = "../scripts/restore-website.sh"

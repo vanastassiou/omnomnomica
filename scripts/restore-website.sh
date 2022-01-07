@@ -101,3 +101,12 @@ sudo cat > /etc/cron.d/nightly-backup << BACKUPS_CRON
 SHELL=/bin/bash
 0 0 0 * *   root    /etc/cron.daily/back-up-website.sh
 BACKUPS_CRON
+
+# Configure Let's Encrypt setup
+sudo mv /home/ubuntu/lets-encrypt.sh /etc/cron.hourly/
+sudo chown root:root /etc/cron.hourly/lets-encrypt.sh && sudo chmod 755 /etc/cron.hourly/lets-encrypt.sh
+
+sudo cat > /etc/cron.d/lets-encrypt << LETS_ENCRYPT
+SHELL=/bin/bash
+0 0/10 * * *   root    /etc/cron.hourly/lets_encrypt.sh
+LETS_ENCRYPT
