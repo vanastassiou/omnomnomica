@@ -70,10 +70,6 @@ sudo mkdir "${APACHE_WEBSITE_DIR}"/logs
 sudo chown -R www-data: "${APACHE_WEBSITE_DIR}"
 sudo systemctl reload apache2
 
-# Set up SSL/TLS certs with Let's Encrypt, redirect HTTP -> HTTPS
-sudo apt install -y certbot python3-certbot-apache
-sudo certbot --non-interactive --agree-tos -m vanastassiou+letsencrypt@gmail.com --apache -d "${WEBSITE_DOMAIN}" --keep-until-expiring --redirect # Avoid requesting new cert needlessly to prevent rate limiting
-
 # Install prerequisites for WordPress
 
 sudo apt install -y php libapache2-mod-php php-mysql mysql-server
@@ -97,3 +93,12 @@ MYSQL_SETUP
 ## Import DB dump
 WP_SITE_DB_DUMP="${TEMP_DIR}"/"${DUMP_BACKUP}"
 mysql -u "${WP_DB_USER}" -h"${WP_DB_HOST}" "${WP_DB_NAME}" < "${WP_SITE_DB_DUMP}"
+
+# Configure nightly backup
+sudo mv /home/ubuntu/back-up-website.sh /etc/cron.daily/
+sudo chown root:root /etc/cron.daily/back-up-website.sh && sudo chmod 755 /etc/cron.daily/back-up-website.sh
+
+sudo cat > /etc/cron.d/nightly-backup << BACKUPS_CRON
+SHELL=/bin/bash
+0 0 0 * *   root    /etc/cron.daily/back-up-website.sh
+BACKUPS_CRON
