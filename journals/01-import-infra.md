@@ -263,5 +263,74 @@ What I know/remember about this site without additional discovery:
   * Get around this by using `terraform show planname.plan` or `terraform show -no-color plans/2022-01-06_12-01-17.plan > plan.txt` to save to a file without weird `Esc` characters
 * `terraform import` followed by `terraform plan` and checking the diff is a great way to be told exactly which attributes are needed in your resource configuration
 
-## 2022-01-06: TBD
-* Need to replace references to local keyfiles with references to secrets in the GitHub Actions vault
+## 2022-01-07: It's not DNS/There's no way it could be DNS/It was DNS
+* Turns out that my domain registrar hadn't actually saved my name server modifications (!?) so hopefully there isn't much of a propagation delay now
+  * Name servers are updated with registrar
+    ```bash
+    → whois omnomnomi.ca | grep "Name Server"
+    Name Server: ns-1298.awsdns-34.org
+    Name Server: ns-1597.awsdns-07.co.uk
+    Name Server: ns-194.awsdns-24.com
+    Name Server: ns-660.awsdns-18.net
+    ```
+  * Doesn't seem to have propagated though:
+    ```
+    → nslookup omnomnomi.ca
+    Server:         172.27.176.1
+    Address:        172.27.176.1#53
+    ** server can't find omnomnomi.ca: SERVFAIL
+    ```
+  * I've updated my hosts file in the meantime to test server functionality
+* Browsing to https://omnomnomi.ca doesn't work; server error
+  * Commented out the HTTP -> HTTPS redirect in the virtual host conf, restarted Apache; nothing
+  * Added `index.html` in document root just in case; it's reachable, meaning there's a problem with Wordpress, not the server's accessibility
+  * I deleted `index.html` and browsing to my domain got me a message from WordPress telling me `php-mysql` was missing
+    * Installed `libapache2-mod-php php-mysql`
+      * TADA! Site is fully restored and browsable
+* `dig` shows the A record has been updated in global DNS as well, so hooray for that as well
+* Now to upload backup script and add it to crontab
+  * My MySQL `root` user doesn't seem to have login privileges either interactively or relying on `~/.my.cnf`
+    * I tried `ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY '[REDACTED]';` but this locked me out so I had to regain entry with:
+    ```bash
+    $ cat > mysql.txt << EOF
+    GRANT ALL ON *.* TO 'root'@'localhost' WITH GRANT OPTION;
+    FLUSH PRIVILEGES;
+    EOF
+
+    $ service mysql restart --init-file mysql.txt
+    ```
+    * I can log in interactively now, but passwordless auth isn't working yet
+      * You know what, I don't actually need to do this...I'll just `sudo mysql` and work with that
+* Problems to fix:
+  * I'm still running into problems with where I extract files during `restore-website.sh`
+  * Let's Encrypt won't work on a freshly created instance because it needs to wait for global DNS to propagate; I can either:
+    * Write a `cron` job to `dig omnomnomi.ca` every few minutes and then run this only if a valid result is obtained:
+      ```bash
+      # Set up SSL/TLS certs with Let's Encrypt, redirect HTTP -> HTTPS
+      sudo apt install -y certbot python3-certbot-apache
+      sudo certbot --non-interactive --agree-tos -m vanastassiou+letsencrypt@gmail.com --apache -d "${WEBSITE_DOMAIN}" --keep-until-expiring --redirect # Avoid requesting new cert needlessly to prevent rate limiting
+      ```
+    * Switch to ACM, which is against the spirit of this phase of work
+
+### Misc notes, gotchas, questions, and follow-up intentions
+* What's the difference between `crontab` and `cron.daily`, `cron.weekly`, etc.? ([reference](https://devconnected.com/cron-jobs-and-crontab-on-linux-explained/))
+  1. `cron.service` runs in the background and runs the `cron.d` daemon every minute
+  1. `cron.d` checks the contents of `/etc/cron.*/`  for scripts that may need to be run
+    * How to define cron jobs?
+      * Interactively as a user: use `crontab -e` to edit your own jobs
+        * The edits are all to a single file that is stored in `/var/spool/cron/crontabs/<YOUR_USERNAME>` (privileged access only)
+      * Systemwide as `root` or another defined user:
+        1. For each job, create a file in `/etc/cron.d/` containing the env vars you want to use and an expression in cron syntax for the command or script to run; e.g.:
+          ```bash
+          $ cat ../cron.d/popularity-contest 
+          SHELL=/bin/sh
+          PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+          7 18 * * *   root    test -x /etc/cron.daily/popularity-contest && /etc/cron.daily/popularity-contest --crond
+          ```
+        1. If Step 1 involves executing a script, place the script in the appropriate `/etc/cron.hourly` (or `.daily`, `.weekly`, etc.) directory with `root:root` ownership and `755` permissions
+          * This location is by convention
+          * You can point to any script in any location in your cron job definition and it will run as long as it has the right permissions
+* Is comparing zipfile and dump sizes an adequate way of determining whether the website has changed since last backup?
+
+## 2022-01-10: TBD
+* #TODO: route all STDERR in scripts to logfile for later examination
