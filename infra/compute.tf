@@ -117,7 +117,22 @@ resource "aws_instance" "web" {
   vpc_security_group_ids      = ["${aws_security_group.webserver.id}"]
   key_name                    = aws_key_pair.deployer.key_name
   availability_zone           = "us-west-2b"
+  
+  # Upload backup script; restore-website.sh will move it and configure the
+  # appropriate cron job
+  provisioner "file" {
+    source      = "../scripts/back-up-website.sh"
+    destination = "/home/ubuntu/back-up-website.sh"
 
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = data.local_file.ec2_deployer_private_key.content
+      host        = aws_instance.web.public_ip
+    }
+  }
+
+  # Upload and run script to install prerequisites and configure website
   provisioner "file" {
     source      = "../scripts/restore-website.sh"
     destination = "/home/ubuntu/restore-website.sh"
