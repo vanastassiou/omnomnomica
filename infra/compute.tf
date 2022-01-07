@@ -22,7 +22,7 @@ resource "aws_vpc" "default" {
 }
 
 resource "aws_security_group" "default" {
-  name = "default"
+  name        = "default"
   vpc_id      = aws_vpc.default.id
   description = "default VPC security group"
   egress = [
@@ -54,9 +54,9 @@ resource "aws_security_group" "default" {
 }
 
 resource "aws_security_group" "webserver" {
-  name = "web"
+  name        = "web"
   description = "Group for web access"
-  vpc_id = aws_vpc.default.id
+  vpc_id      = aws_vpc.default.id
   egress = [
     {
       cidr_blocks      = ["0.0.0.0/0"]
@@ -117,7 +117,11 @@ resource "aws_instance" "web" {
   vpc_security_group_ids      = ["${aws_security_group.webserver.id}"]
   key_name                    = aws_key_pair.deployer.key_name
   availability_zone           = "us-west-2b"
-  
+
+  tags = {
+    "Name" = "omnomnomi_webserv"
+  }
+
   # Upload backup script; restore-website.sh will move it and configure the
   # appropriate cron job
   provisioner "file" {
