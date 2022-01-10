@@ -332,5 +332,9 @@ What I know/remember about this site without additional discovery:
           * You can point to any script in any location in your cron job definition and it will run as long as it has the right permissions
 * Is comparing zipfile and dump sizes an adequate way of determining whether the website has changed since last backup?
 
-## 2022-01-10: TBD
-* #TODO: route all STDERR in scripts to logfile for later examination
+## 2022-01-10: Unattended installation
+* Right now I have the choice between:
+  * Improving logging for my scripts, since  `echo` is totally useless for unattended installations
+  * Making the GitHub Action workflow to deploy the infra work, since `echo` probably _won't_ be useless if Actions is like other CI/CD tools and logs STDOUT for each run
+    * This one sounds like a better use of my time today
+* My GitHub repo is set up with the `S3_USER_AWS_ACCESS_KEY_ID` and `S3_USER_AWS_SECRET_ACCESS_KEY` secrets for the `dev` environment, so that's a good start

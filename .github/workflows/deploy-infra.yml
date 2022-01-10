@@ -17,6 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Terraform plan
-        run: ./scripts/plan.sh
+        run: |
+          cd /scripts
+          chmod 777 ./plan.sh
+          ./plan.sh
       - name: Terraform apply
-        run: ./scripts/apply.sh
+        run: |
+          cd /scripts
+          chmod 777 ./apply.sh
+          ./apply.sh
+
