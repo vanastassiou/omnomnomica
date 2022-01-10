@@ -4,6 +4,7 @@
 # by `apply.sh`.
 
 cd ../infra
+mkdir ./plans/
 
 terraform fmt -recursive
 terraform init
