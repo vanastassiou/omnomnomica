@@ -14,6 +14,7 @@ jobs:
       aws_access_key_id: '${{ secrets.S3_USER_AWS_ACCESS_KEY_ID }}'
       aws_secret_access_key: '${{ secrets.S3_USER_AWS_SECRET_ACCESS_KEY }}'
       AWS_DEFAULT_REGION: 'us-west-2'
+      TF_VAR_ec2_deployer_private_key: '${{ secrets.TF_VAR_EC2_DEPLOYER_PRIVATE_KEY }}'
     steps:
       - uses: actions/checkout@v2
       - name: Terraform plan

@@ -1,19 +1,6 @@
-# The below is for local testing purposes only
-
-data "local_file" "ec2_deployer_private_key" {
-  filename = "${path.root}/../../../.ssh/omnomnomica-ec2-deployer"
-}
-
-data "local_file" "ec2_deployer_public_key" {
-  filename = "${path.root}/../../../.ssh/omnomnomica-ec2-deployer.pub"
-}
-
-# TODO: Replace the above and references to them with references to secrets in
-# CI/CD system's vault.
-
-resource "aws_key_pair" "deployer" {
+resource "aws_key_pair" "deployer_public_key" {
   key_name   = "deployer-key"
-  public_key = data.local_file.ec2_deployer_public_key.content
+  public_key = var.ec2_deployer_public_key
 }
 
 
@@ -115,7 +102,7 @@ resource "aws_instance" "web" {
   instance_type               = var.instance_type
   associate_public_ip_address = true
   vpc_security_group_ids      = ["${aws_security_group.webserver.id}"]
-  key_name                    = aws_key_pair.deployer.key_name
+  key_name                    = aws_key_pair.deployer_public_key.key_name
   availability_zone           = "us-west-2b"
 
   tags = {
@@ -131,7 +118,7 @@ resource "aws_instance" "web" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = data.local_file.ec2_deployer_private_key.content
+      private_key = var.ec2_deployer_private_key
       host        = aws_instance.web.public_ip
     }
   }
@@ -143,7 +130,7 @@ resource "aws_instance" "web" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = data.local_file.ec2_deployer_private_key.content
+      private_key = var.ec2_deployer_private_key
       host        = aws_instance.web.public_ip
     }
   }
@@ -156,7 +143,7 @@ resource "aws_instance" "web" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = data.local_file.ec2_deployer_private_key.content
+      private_key = var.ec2_deployer_private_key
       host        = aws_instance.web.public_ip
     }
   }
@@ -170,7 +157,7 @@ resource "aws_instance" "web" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = data.local_file.ec2_deployer_private_key.content
+      private_key = var.ec2_deployer_private_key
       host        = aws_instance.web.public_ip
     }
   }
