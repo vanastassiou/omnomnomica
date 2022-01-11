@@ -342,7 +342,7 @@ What I know/remember about this site without additional discovery:
     * I'll leave that until tomorrow
   * Testing restore scripts in place in the meantime, I'm still running into the globbing problem where the below expression does what I want interactively, but gives me this error when I run it as part of my script: `stat: cannot stat 'example.website*.conf': No such file or directory`
     ```bash
-    for conf in $(stat -c %n "${WEBSITE_DOMAIN}"*.conf); do
+    for conf in $"${WEBSITE_DOMAIN}"*.conf; do
     sudo a2ensite $conf;
     done
     ```
@@ -354,4 +354,17 @@ What I know/remember about this site without additional discovery:
   * I worked around it by setting them as repo secrets, but I'm noting this here in case I need to figure this out in the future
 * Extracting the AWS CLI installer archive overwrites `~/.aws/credentials`
 
-## 2022-01-11: Untangle the wildcard problem
+## 2022-01-11: Untangle the wildcard problem, debug syntax errors
+* I posed the question to #cds and Tien got back to me with:
+  > I wouldn't stat as a way to list out for your loop. I would just do something like
+    ```bash
+    for conf in "${WEBSITE_DOMAIN}"*.conf
+    do
+        echo $conf
+    done
+    ```
+  > `$()` ...effectively substitutes in the stdout of the stat command, which is not what you want to loop over (you want to loop over the files themselves)
+  * This works and I'm happy with it
+* The `plan` step is barfing because `aws_key_pair.deployer_public_key` is left over from a previous run (I terminated the EC2 instance which left behind a dirty state)
+* Also I've just realized I haven't debugged `update-terraform.sh` because I only ever use it locally and there's an existing package on the GitHub-provided build agent, so I haven't been using it at all
+  * It's pretty buggy and I'm definitely running into syntax errors here too :(
