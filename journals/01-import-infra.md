@@ -337,9 +337,21 @@ What I know/remember about this site without additional discovery:
   * Improving logging for my scripts, since  `echo` is totally useless for unattended installations
   * Making the GitHub Action workflow to deploy the infra work, since `echo` probably _won't_ be useless if Actions is like other CI/CD tools and logs STDOUT for each run
     * This one sounds like a better use of my time today
-* My GitHub repo is set up with the `S3_USER_AWS_ACCESS_KEY_ID` and `S3_USER_AWS_SECRET_ACCESS_KEY` secrets for the `dev` environment, so that's a good start
-* For Terraform, need to convert local SSH using key auth into something the workflow can use
+* Debugging the workflows took up most of my available time
+  * Currently the process is at a state where I must destroy the existing instance to fully test whether the restore works end to end
+    * I'll leave that until tomorrow
+  * Testing restore scripts in place in the meantime, I'm still running into the globbing problem where the below expression does what I want interactively, but gives me this error when I run it as part of my script: `stat: cannot stat 'example.website*.conf': No such file or directory`
+    ```bash
+    for conf in $(stat -c %n "${WEBSITE_DOMAIN}"*.conf); do
+    sudo a2ensite $conf;
+    done
+    ```
 
 ### Misc notes, gotchas, questions, and follow-up intentions
 * TIL: GitHub Actions view only shows the option to manually trigger a run on the branch defined as default in repo settings
 * Enable debug logs by setting `ACTIONS_RUNNER_DEBUG` secret to `true` in the repo settings
+* I wasn't able to reference the environment secrets I set using the '${{ secrets.SECRET_NAME }}' syntax in workflows (debug logs showed an env var with a blank value)
+  * I worked around it by setting them as repo secrets, but I'm noting this here in case I need to figure this out in the future
+* Extracting the AWS CLI installer archive overwrites `~/.aws/credentials`
+
+## 2022-01-11: Untangle the wildcard problem
