@@ -1,43 +1,4 @@
-resource "aws_key_pair" "deployer_public_key" {
-  key_name   = "deployer-key"
-  public_key = var.ec2_deployer_public_key
-}
-
-
 resource "aws_vpc" "default" {
-  cidr_block = "172.31.0.0/16"
-}
-
-resource "aws_security_group" "default" {
-  name        = "default"
-  vpc_id      = aws_vpc.default.id
-  description = "default VPC security group"
-  egress = [
-    {
-      cidr_blocks      = ["0.0.0.0/0"]
-      description      = ""
-      from_port        = 0
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      protocol         = "-1"
-      security_groups  = []
-      self             = false
-      to_port          = 0
-    }
-  ]
-  ingress = [
-    {
-      cidr_blocks      = []
-      description      = ""
-      from_port        = 0
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      protocol         = "-1"
-      security_groups  = []
-      self             = true
-      to_port          = 0
-    }
-  ]
 }
 
 resource "aws_security_group" "webserver" {
