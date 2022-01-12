@@ -1,3 +1,11 @@
+resource "aws_key_pair" "deployer_public_key" {
+  key_name   = "deployer-key"
+  public_key = var.ec2_deployer_public_key
+  tags = {
+    "Name" = "terraform-managed"
+  }
+}
+
 resource "aws_vpc" "default" {
 }
 
@@ -21,9 +29,7 @@ resource "aws_security_group" "webserver" {
 
   ingress = [
     {
-      cidr_blocks = [
-        "0.0.0.0/0"
-      ]
+      cidr_blocks      = ["0.0.0.0/0"]
       description      = ""
       from_port        = 22
       ipv6_cidr_blocks = []
