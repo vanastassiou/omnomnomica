@@ -29,18 +29,22 @@ cloud-init status --wait
 
 sudo apt update && sudo apt install -y zip unzip  >/dev/null 2>&1
 
-if [ -z command -v aws >/dev/null 2>&1 ]; then
+if [ command -v /usr/local/bin/ aws --version >/dev/null 2>&1 ]; then
+  echo 'INFO: AWS CLI already installed; skipping ahead'
+else
+  echo 'INFO: AWS CLI not installed; proceeding with installation'
+fi
   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
   unzip awscliv2.zip
-  sudo ./aws/install --update
-  rm -rf awscliv2.zip 
-  rm -rf aws
-fi
+  sudo ./aws/install
 
-if [ ! command -v aws --version >/dev/null 2>&1 ]; then
+if [ ! command -v /usr/local/bin/ aws --version >/dev/null 2>&1 ]; then
   echo "ERROR: failed to install AWS CLI; exiting"
   exit $?
 fi
+
+rm -rf awscliv2.zip 
+rm -rf aws/
 
 aws --profile default configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}"
 aws --profile default configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}"
@@ -60,7 +64,7 @@ aws s3 cp s3://"${S3_BUCKET_NAME}"/"${DUMP_BACKUP}" "${BACKUPS_DIR}"
 
 # Extract site files
 unzip "${BACKUPS_DIR}"/"${SITEFILES_BACKUP}" -d "${TEMP_DIR}"
-cp "${BACKUPS_DIR}"/"${DUMP_BACKUP}" "${TEMP_DIR}"
+cp -r "${BACKUPS_DIR}"/"${DUMP_BACKUP}" "${TEMP_DIR}"
 
 # Set up Apache
 sudo apt install -y apache2  >/dev/null 2>&1
