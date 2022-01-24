@@ -368,3 +368,30 @@ What I know/remember about this site without additional discovery:
 * The `plan` step is barfing because `aws_key_pair.deployer_public_key` is left over from a previous run (I terminated the EC2 instance which left behind a dirty state)
 * Also I've just realized I haven't debugged `update-terraform.sh` because I only ever use it locally and there's an existing package on the GitHub-provided build agent, so I haven't been using it at all
   * It's pretty buggy and I'm definitely running into syntax errors here too :(
+
+## 2022-01-24: Back from sick and new project intro
+* Lost the last couple of weeks to getting ill and new project onboarding
+* Caught up with Matt and decided the aim for next meeting is to fix bugs and ensure current setup deploys as necessary
+* Dave's comments re debugging:
+  * `$(which terraform)` runs in a subprocess and returns the exit code; should use `if ! command -v terraform &> /dev/null` to execute in current shell
+  * `grep -Po` syntax isn't universally workable for regexes; try field-delimited solutions e.g. `cat config.txt | awk -F"'" '/DB_NAME/{print $4}'`
+* Configuring the AWS CLI with credentials is being a real PITA
+  * Per [this post](https://stackoverflow.com/questions/48696054/how-to-run-aws-configure-on-amazon-aws-ec2-automatically-without-interaction-wit#comment84392327_48696119) it's better to assign an IAM role to the instance with RW permissions for S3 to manage these steps
+* Outputting error messages to STDOUT works for running scripts manually and logged pipeline executions, but if I want to see what's happened with the nightly backup, I'll have to check everything manually
+* Something's wrong with my syntax for my `/etc/cron.d` job definitions -- not sure if I should have done `crontab -e` instead of just putting the jobs in?
+  ```bash
+  ubuntu@ip-172-31-22-227:~$ cat /var/log/syslog | grep ERROR
+  Jan 24 19:38:01 ip-172-31-22-227 cron[443]: (*system*lets-encrypt) ERROR (Syntax error, this crontab file will be ignored)
+  Jan 24 19:38:01 ip-172-31-22-227 cron[443]: (*system*nightly-backup) ERROR (Syntax error, this crontab file will be ignored)
+  Jan 24 20:00:56 ip-172-31-22-227 cron[426]: (*system*lets-encrypt) ERROR (Syntax error, this crontab file will be ignored)
+  Jan 24 20:00:56 ip-172-31-22-227 cron[426]: (*system*nightly-backup) ERROR (Syntax error, this crontab file will be ignored)
+  Jan 24 20:41:01 ip-172-31-22-227 cron[426]: (*system*lets-encrypt) ERROR (Syntax error, this crontab file will be ignored)
+  Jan 24 21:01:01 ip-172-31-22-227 cron[426]: (*system*lets-encrypt-renew) ERROR (Syntax error, this crontab file will be ignored)
+  Jan 24 23:38:01 ip-172-31-22-227 cron[426]: (*system*nightly-backup) ERROR (Syntax error, this crontab file will be ignored)
+  ```
+  * It's a bit annoying that I didn't get some kind of push notification of the errors and had to look for it in the syslog
+    * [`/etc/rsyslog.d/` conf files to the rescue](https://www.thegeekdiary.com/understanding-the-etc-rsyslog-conf-file-for-configuring-system-logging/)
+
+### Misc notes, gotchas, questions, and follow-up intentions
+* TIL [`aws_default_security_group`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_security_group) exists and is distinct from [`aws_security_group`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group)
+* To consider: logging/messaging strategies for standard server machines
