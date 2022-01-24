@@ -71,6 +71,7 @@ resource "aws_instance" "web" {
   vpc_security_group_ids      = ["${aws_security_group.webserver.id}"]
   key_name                    = aws_key_pair.deployer_public_key.key_name
   availability_zone           = "us-west-2b"
+  iam_instance_profile        = aws_iam_instance_profile.backup_and_restore.name
 
   tags = {
     "Name" = "omnomnomi_webserv"
