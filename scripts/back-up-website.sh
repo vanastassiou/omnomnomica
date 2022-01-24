@@ -18,13 +18,15 @@ S3_BUCKET_NAME="omnomnomica-backups"
 # Add site files and Apache virtual host config files to one zip archive
 SITEFILES_ZIP="${WEBSITE_DOMAIN}-${TIMESTAMP}.zip"
 
-echo "INFO: Creating archive of website document root and virtual hosts files"
+echo "INFO: Creating archive of website document root, virtual hosts file, and Let's Encrypt directory"
 
 cd ${WEBSITE_ROOT}
 zip -r "${TEMP_DIR}/${SITEFILES_ZIP}" public_html >/dev/null 2>&1
 
 cd ${VHOST_FILE_LOCATION}
-zip -u "${TEMP_DIR}/${SITEFILES_ZIP}" "${WEBSITE_DOMAIN}"* >/dev/null 2>&1
+zip -u "${TEMP_DIR}/${SITEFILES_ZIP}" "${WEBSITE_DOMAIN}".conf >/dev/null 2>&1
+
+zip -u "${TEMP_DIR}/${SITEFILES_ZIP}" /etc/letsencrypt >/dev/null 2>&1
 
 ## Check zipfile integrity
 
@@ -41,9 +43,8 @@ fi
 # Dump database to file
 WEBSITE_DB_DUMP="${WEBSITE_DOMAIN}-${TIMESTAMP}.sql"
 WP_CONFIG_FILE="${WEBSITE_ROOT}/public_html/wp-config.php"
-WP_DB_USER=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_USER', '\\K.*(?=')")
-WP_DB_NAME=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_NAME', '\\K.*(?=')")
-WP_DB_HOST=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_HOST', '\\K.*(?=')")
+WP_DB_NAME=$(cat "${WP_CONFIG_FILE}" | awk -F"'" '/DB_NAME/{print $4}')
+
 
 ## Use ~/.my.cnf instead of CLI auth, set up during restore-website.sh
 echo "INFO: Dumping ${WP_DB_NAME} database to file"
