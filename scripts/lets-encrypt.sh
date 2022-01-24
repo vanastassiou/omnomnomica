@@ -26,10 +26,6 @@ if [ $? -ne 0 ]; then
   exit
 else
   sudo rm /etc/cron.hourly/lets-encrypt.sh /etc/cron.d/lets-encrypt
-
-  ## Check nightly to see if certificate needs renewal
-  sudo tee /etc/cron.d/lets-encrypt-renew > /dev/null <<- RENEW
-  SHELL=/bin/bash
-  0 1 * * * /usr/bin/certbot renew --quiet
-	RENEW
+	# No need to manually schedule renewals, since LE configures an appropriate
+	# cron job upon success
 fi
