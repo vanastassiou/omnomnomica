@@ -17,13 +17,13 @@ S3_BUCKET_NAME="omnomnomica-backups"
 WEBSITE_DOMAIN="omnomnomi.ca"
 APACHE_WEBSITE_DIR="/var/www/${WEBSITE_DOMAIN}"
 
-# Install AWS CLI and configure with S3 IAM user for backups
+# Install AWS CLI; permissions are attached as an IAM role to the EC2 instance
 
-# Necessary because AWS uses cloud-init to populate the list of package
-# sources, which takes a few seconds to run after instance spinup and can cause
-# issues when automating deployment. 
-#
-# Reference:  https://forum.gitlab.com/t/install-zip-unzip/13471/9
+## Necessary because AWS uses cloud-init to populate the list of package
+## sources, which takes a few seconds to run after instance spinup and can cause
+## issues when automating deployment. 
+
+## Reference:  https://forum.gitlab.com/t/install-zip-unzip/13471/9
 
 cloud-init status --wait
 
@@ -45,10 +45,7 @@ if ! command -v /usr/local/bin/ aws --version >/dev/null 2>&1 ; then
   exit $?
 fi
 
-aws --profile default configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}"
-aws --profile default configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}"
-
-command -v aws s3 ls --profile=default >/dev/null 2>&1
+command -v aws s3 ls >/dev/null 2>&1
 if [ $? -ne 0 ]; then
   echo "ERROR: failed to configure S3 user for AWS CLI; exiting"
   exit $?
