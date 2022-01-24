@@ -77,8 +77,8 @@ aws s3 cp "${TEMP_DIR}/${SITEFILES_ZIP}" s3://"${S3_BUCKET_NAME}"/
 aws s3 cp "${TEMP_DIR}/${WEBSITE_DB_DUMP}" s3://"${S3_BUCKET_NAME}"/
 
 # Verify transfer to S3 by checking filesizes
-AWS_SITEFILES_ZIP_SIZE=$(aws s3api head-object --bucket=${S3_BUCKET_NAME} --key "${NEWEST_AWS_SITEFILES_BACKUP}" --query 'ContentLength')
-AWS_WEBSITE_DB_DUMP_SIZE=$(aws s3api head-object --bucket=${S3_BUCKET_NAME} --key "${NEWEST_AWS_DUMP_BACKUP}" --query 'ContentLength')
+AWS_SITEFILES_ZIP_SIZE=$(aws s3api head-object --bucket=${S3_BUCKET_NAME} --key "${NEW_AWS_SITEFILES_BACKUP}" --query 'ContentLength')
+AWS_WEBSITE_DB_DUMP_SIZE=$(aws s3api head-object --bucket=${S3_BUCKET_NAME} --key "${NEW_AWS_DUMP_BACKUP}" --query 'ContentLength')
 
 if [ $AWS_SITEFILES_ZIP_SIZE != ${LOCAL_SITEFILES_ZIP_SIZE} ]; then
   echo "WARNING: file size mismatch for ${SITEFILES_ZIP} after upload to S3.
