@@ -27,24 +27,23 @@ APACHE_WEBSITE_DIR="/var/www/${WEBSITE_DOMAIN}"
 
 cloud-init status --wait
 
-sudo apt update && sudo apt install -y zip unzip  >/dev/null 2>&1
+sudo apt -qq update && sudo apt -qq install -y zip unzip >/dev/null 2>&1
 
-if [ command -v /usr/local/bin/ aws --version >/dev/null 2>&1 ]; then
+if command -v /usr/local/bin/ aws --version >/dev/null 2>&1 ; then
   echo 'INFO: AWS CLI already installed; skipping ahead'
 else
   echo 'INFO: AWS CLI not installed; proceeding with installation'
-fi
   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
   unzip awscliv2.zip
   sudo ./aws/install
+  rm -rf awscliv2.zip 
+  rm -rf aws/
+fi
 
-if [ ! command -v /usr/local/bin/ aws --version >/dev/null 2>&1 ]; then
+if ! command -v /usr/local/bin/ aws --version >/dev/null 2>&1 ; then
   echo "ERROR: failed to install AWS CLI; exiting"
   exit $?
 fi
-
-rm -rf awscliv2.zip 
-rm -rf aws/
 
 aws --profile default configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}"
 aws --profile default configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}"
@@ -55,7 +54,7 @@ if [ $? -ne 0 ]; then
   exit $?
 fi
 
-## Download most recent sitefiles archive and SQL dump files
+# ## Download most recent sitefiles archive and SQL dump files
 DUMP_BACKUP=$(aws s3 ls ${S3_BUCKET_NAME} | grep sql | sort | tail -n 1 | awk '{print $4}')
 SITEFILES_BACKUP=$(aws s3 ls ${S3_BUCKET_NAME} | grep zip | sort | tail -n 1 | awk '{print $4}')
 
@@ -78,21 +77,23 @@ for conf in "${WEBSITE_DOMAIN}"*.conf; do
 done
 
 sudo a2enmod rewrite
-sudo mkdir "${APACHE_WEBSITE_DIR}"/logs
+
+if [[ ! -e ${APACHE_WEBSITE_DIR}/logs ]]; then
+  sudo mkdir "${APACHE_WEBSITE_DIR}"/logs
+fi
+
 sudo chown -R www-data: "${APACHE_WEBSITE_DIR}"
 sudo systemctl reload apache2
 
 # Install prerequisites for WordPress
-
 sudo apt install -y php libapache2-mod-php php-mysql mysql-server  >/dev/null 2>&1
 
 ## Extract existing values from wp-config.php
 WP_CONFIG_FILE="${APACHE_WEBSITE_DIR}/public_html/wp-config.php"
-WP_DB_USER=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_USER', '\\K.*(?=')")
-WP_DB_NAME=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_NAME', '\\K.*(?=')")
-WP_DB_PASSWORD=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_PASSWORD', '\\K.*(?=')")
-WP_DB_HOST=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_HOST', '\\K.*(?=')")
-WP_DB_CHARSET=$(cat "${WP_CONFIG_FILE}" | grep -Po "DB_CHARSET', '\\K.*(?=')")
+WP_DB_USER=$(cat "${WP_CONFIG_FILE}" | awk -F"'" '/DB_NAME/{print $4}')
+WP_DB_NAME=$(cat "${WP_CONFIG_FILE}" | awk -F"'" '/DB_NAME/{print $4}')
+WP_DB_PASSWORD=$(cat "${WP_CONFIG_FILE}" | awk -F"'" '/DB_NAME/{print $4}')
+WP_DB_HOST=$(cat "${WP_CONFIG_FILE}" | awk -F"'" '/DB_NAME/{print $4}')
 
 ## Create user and DB
 sudo mysql -u root << MYSQL_SETUP
