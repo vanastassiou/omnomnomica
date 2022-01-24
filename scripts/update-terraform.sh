@@ -5,7 +5,7 @@
 
 declare TF_CURRENT_VERSION
 
-if $(which terraform); then
+if ! command -v terraform &> /dev/null; then
     TF_CURRENT_VERSION=$(terraform version | head -n 1 | sed -n 's/Terraform v//p') >/dev/null 2>&1 # Retrieves only digits of currently installed version number
 else
     TF_CURRENT_VERSION=""
