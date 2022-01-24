@@ -16,12 +16,20 @@ fi
 # Sets up SSL/TLS certs with Let's Encrypt, redirect HTTP -> HTTPS
 echo "SUCCESS: DNS record found for ${WEBSITE_DOMAIN}; requesting certificate from Let's Encrypt"
 
-sudo apt install -y certbot python3-certbot-apache
-sudo certbot --non-interactive --agree-tos -m vanastassiou+letsencrypt@gmail.com --apache -d "${WEBSITE_DOMAIN}" --keep-until-expiring --redirect # Avoid requesting new cert needlessly to prevent rate limiting
+sudo apt -qq install -y certbot python3-certbot-apache >/dev/null 2>&1
+
+# Avoid requesting new cert needlessly to prevent rate limiting
+sudo certbot --non-interactive --agree-tos -m vanastassiou+letsencrypt@gmail.com --apache -d "${WEBSITE_DOMAIN}" --keep-until-expiring --redirect
 
 if [ $? -ne 0 ]; then
-  echo "ERROR: Failed to obtain Let's Encrypt certificate."
+  echo "ERROR: Failed to obtain or install Let's Encrypt certificate"
   exit
 else
   sudo rm /etc/cron.hourly/lets-encrypt.sh /etc/cron.d/lets-encrypt
+
+  ## Check nightly to see if certificate needs renewal
+  sudo tee /etc/cron.d/lets-encrypt-renew > /dev/null <<- RENEW
+  SHELL=/bin/bash
+  0 1 * * * /usr/bin/certbot renew --quiet
+	RENEW
 fi
