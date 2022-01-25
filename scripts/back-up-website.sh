@@ -20,20 +20,18 @@ SITEFILES_ZIP="${WEBSITE_DOMAIN}-${TIMESTAMP}.zip"
 
 echo "INFO: Creating archive of website document root, virtual hosts file, and Let's Encrypt directory"
 
-cd ${WEBSITE_ROOT}
+cd ${WEBSITE_ROOT} || exit
 zip -r "${TEMP_DIR}/${SITEFILES_ZIP}" public_html >/dev/null 2>&1
 
-cd ${VHOST_FILE_LOCATION}
+cd ${VHOST_FILE_LOCATION} || exit
 zip -u "${TEMP_DIR}/${SITEFILES_ZIP}" "${WEBSITE_DOMAIN}".conf >/dev/null 2>&1
 
-zip -u "${TEMP_DIR}/${SITEFILES_ZIP}" /etc/letsencrypt >/dev/null 2>&1
+zip -u "${TEMP_DIR}/${SITEFILES_ZIP}" "/etc/letsencrypt/*" >/dev/null 2>&1
 
 ## Check zipfile integrity
 
 echo "INFO: Testing archive integrity"
-unzip -t "${TEMP_DIR}/${SITEFILES_ZIP}" >/dev/null 2>&1
-
-if [ $? -eq 0 ]; then
+if  unzip -t "${TEMP_DIR}/${SITEFILES_ZIP}" >/dev/null 2>&1 ; then
   echo "SUCCESS: Verified integrity of ${SITEFILES_ZIP} archive"
 else
   echo "ERROR: ${SITEFILES_ZIP} failed its integrity check"
@@ -43,12 +41,12 @@ fi
 # Dump database to file
 WEBSITE_DB_DUMP="${WEBSITE_DOMAIN}-${TIMESTAMP}.sql"
 WP_CONFIG_FILE="${WEBSITE_ROOT}/public_html/wp-config.php"
-WP_DB_NAME=$(cat "${WP_CONFIG_FILE}" | awk -F"'" '/DB_NAME/{print $4}')
+WP_DB_NAME=$(awk -F"'" '/DB_NAME/{print $4}'< "${WP_CONFIG_FILE}")
 
 
 ## Use ~/.my.cnf instead of CLI auth, set up during restore-website.sh
 echo "INFO: Dumping ${WP_DB_NAME} database to file"
-sudo mysqldump "${WP_DB_NAME}" > "${TEMP_DIR}/${WEBSITE_DB_DUMP}"
+sudo mysqldump "${WP_DB_NAME}" > "${TEMP_DIR}/${WEBSITE_DB_DUMP}" # Shellcheck flags this, but it's a false positive (see SC2024 entry in wiki)
 echo "SUCCESS: Dump complete"
 
 # Compare sizes of newly created zipfile and dumpfile against most recently
@@ -63,7 +61,7 @@ OLD_WEBSITE_DB_DUMP_SIZE=$(stat "${BACKUPS_DIR}/${WEBSITE_DOMAIN}"*.sql --format
 NEW_SITEFILES_ZIP_SIZE=$(stat "${TEMP_DIR}/${SITEFILES_ZIP}" --format="%s")
 NEW_WEBSITE_DB_DUMP_SIZE=$(stat "${TEMP_DIR}/${WEBSITE_DB_DUMP}" --format="%s")
 
-if [ ${OLD_SITEFILES_ZIP_SIZE} -eq ${NEW_SITEFILES_ZIP_SIZE} ] && [ ${OLD_WEBSITE_DB_DUMP_SIZE} -eq ${NEW_WEBSITE_DB_DUMP_SIZE} ]; then
+if [ "${OLD_SITEFILES_ZIP_SIZE}" -eq "${NEW_SITEFILES_ZIP_SIZE}" ] && [ "${OLD_WEBSITE_DB_DUMP_SIZE}" -eq "${NEW_WEBSITE_DB_DUMP_SIZE}" ]; then
   echo "ERROR: No changes detected to website since last restore. Cancelling backup."
   rm "${TEMP_DIR}/${SITEFILES_ZIP}" "${TEMP_DIR}/${WEBSITE_DB_DUMP}"
   exit $?
@@ -77,15 +75,15 @@ aws s3 cp "${TEMP_DIR}/${SITEFILES_ZIP}" s3://"${S3_BUCKET_NAME}"/
 aws s3 cp "${TEMP_DIR}/${WEBSITE_DB_DUMP}" s3://"${S3_BUCKET_NAME}"/
 
 # Verify transfer to S3 by checking filesizes
-AWS_SITEFILES_ZIP_SIZE=$(aws s3api head-object --bucket=${S3_BUCKET_NAME} --key "${NEW_AWS_SITEFILES_BACKUP}" --query 'ContentLength')
-AWS_WEBSITE_DB_DUMP_SIZE=$(aws s3api head-object --bucket=${S3_BUCKET_NAME} --key "${NEW_AWS_DUMP_BACKUP}" --query 'ContentLength')
+AWS_SITEFILES_ZIP_SIZE=$(aws s3api head-object --bucket="${S3_BUCKET_NAME}" --key "${NEW_AWS_SITEFILES_BACKUP}" --query 'ContentLength')
+AWS_WEBSITE_DB_DUMP_SIZE=$(aws s3api head-object --bucket="${S3_BUCKET_NAME}" --key "${NEW_AWS_DUMP_BACKUP}" --query 'ContentLength')
 
-if [ $AWS_SITEFILES_ZIP_SIZE != ${LOCAL_SITEFILES_ZIP_SIZE} ]; then
+if [ "${AWS_SITEFILES_ZIP_SIZE}" != "${LOCAL_SITEFILES_ZIP_SIZE}" ]; then
   echo "WARNING: file size mismatch for ${SITEFILES_ZIP} after upload to S3.
   The file has been uploaded, but you should verify it."
 fi
 
-if [ $AWS_WEBSITE_DB_DUMP_SIZE != ${LOCAL_WEBSITE_DB_DUMP_SIZE} ]; then
+if [ "${AWS_WEBSITE_DB_DUMP_SIZE}" != "${LOCAL_WEBSITE_DB_DUMP_SIZE}" ]; then
   echo "WARNING: file size mismatch for ${WEBSITE_DB_DUMP} after upload to S3.
   The file has been uploaded, but you should verify it."
 fi

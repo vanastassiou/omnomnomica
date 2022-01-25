@@ -46,7 +46,7 @@ if ! command -v /usr/local/bin/ aws --version >/dev/null 2>&1 ; then
 fi
 
 command -v aws s3 ls >/dev/null 2>&1
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ]; then # Using "problematic pattern" since some shells don't support ! outside [] (SC2181)
   echo "ERROR: failed to configure S3 user for AWS CLI; exiting"
   exit $?
 fi
@@ -70,7 +70,7 @@ sudo mv "${TEMP_DIR}/${WEBSITE_DOMAIN}"*.conf "/etc/apache2/sites-available/"
 
 ## Enable both HTTP and HTTPS virtual hosts files
 for conf in "${WEBSITE_DOMAIN}"*.conf; do
-  sudo a2ensite $conf;
+  sudo a2ensite "$conf";
 done
 
 sudo a2enmod rewrite
@@ -87,10 +87,10 @@ sudo apt install -y php libapache2-mod-php php-mysql mysql-server  >/dev/null 2>
 
 ## Extract existing values from wp-config.php
 WP_CONFIG_FILE="${APACHE_WEBSITE_DIR}/public_html/wp-config.php"
-WP_DB_USER=$(cat "${WP_CONFIG_FILE}" | awk -F"'" '/DB_NAME/{print $4}')
-WP_DB_NAME=$(cat "${WP_CONFIG_FILE}" | awk -F"'" '/DB_NAME/{print $4}')
-WP_DB_PASSWORD=$(cat "${WP_CONFIG_FILE}" | awk -F"'" '/DB_NAME/{print $4}')
-WP_DB_HOST=$(cat "${WP_CONFIG_FILE}" | awk -F"'" '/DB_NAME/{print $4}')
+WP_DB_USER=$(awk -F"'" '/DB_NAME/{print $4}' < "${WP_CONFIG_FILE}")
+WP_DB_NAME=$(awk -F"'" '/DB_NAME/{print $4}' < "${WP_CONFIG_FILE}")
+WP_DB_PASSWORD=$(awk -F"'" '/DB_NAME/{print $4}'< "${WP_CONFIG_FILE}")
+WP_DB_HOST=$(awk -F"'" '/DB_NAME/{print $4}'< "${WP_CONFIG_FILE}")
 
 ## Create user and DB
 sudo mysql -u root << MYSQL_SETUP
