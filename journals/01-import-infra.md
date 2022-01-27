@@ -395,3 +395,7 @@ What I know/remember about this site without additional discovery:
 ### Misc notes, gotchas, questions, and follow-up intentions
 * TIL [`aws_default_security_group`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_security_group) exists and is distinct from [`aws_security_group`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group)
 * To consider: logging/messaging strategies for standard server machines
+
+## 2022-01-17: Logging and debugging cron jobs
+* Investigated and fixed the logic messing up the backup
+* I think we're good to merge to master for this one and observe any problems arising from the infra
