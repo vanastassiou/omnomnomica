@@ -43,7 +43,6 @@ WEBSITE_DB_DUMP="${WEBSITE_DOMAIN}-${TIMESTAMP}.sql"
 WP_CONFIG_FILE="${WEBSITE_ROOT}/public_html/wp-config.php"
 WP_DB_NAME=$(awk -F"'" '/DB_NAME/{print $4}'< "${WP_CONFIG_FILE}")
 
-
 ## Use ~/.my.cnf instead of CLI auth, set up during restore-website.sh
 echo "INFO: Dumping ${WP_DB_NAME} database to file"
 sudo mysqldump "${WP_DB_NAME}" > "${TEMP_DIR}/${WEBSITE_DB_DUMP}" # Shellcheck flags this, but it's a false positive (see SC2024 entry in wiki)
@@ -74,18 +73,18 @@ echo "SUCCESS: New files different from old; proceeding with upload to ${S3_BUCK
 aws s3 cp "${TEMP_DIR}/${SITEFILES_ZIP}" s3://"${S3_BUCKET_NAME}"/
 aws s3 cp "${TEMP_DIR}/${WEBSITE_DB_DUMP}" s3://"${S3_BUCKET_NAME}"/
 
-# Verify transfer to S3 by checking filesizes
+# Verify transfer to S3 by checking filesiz
 AWS_SITEFILES_ZIP_SIZE=$(aws s3api head-object --bucket="${S3_BUCKET_NAME}" --key "${NEW_AWS_SITEFILES_BACKUP}" --query 'ContentLength')
 AWS_WEBSITE_DB_DUMP_SIZE=$(aws s3api head-object --bucket="${S3_BUCKET_NAME}" --key "${NEW_AWS_DUMP_BACKUP}" --query 'ContentLength')
 
 if [ "${AWS_SITEFILES_ZIP_SIZE}" != "${LOCAL_SITEFILES_ZIP_SIZE}" ]; then
-  echo "WARNING: file size mismatch for ${SITEFILES_ZIP} after upload to S3.
-  The file has been uploaded, but you should verify it."
+  echo "ERROR: couldn't verify file sizes for ${SITEFILES_ZIP}; please verify manually"
+  exit $?
 fi
 
 if [ "${AWS_WEBSITE_DB_DUMP_SIZE}" != "${LOCAL_WEBSITE_DB_DUMP_SIZE}" ]; then
-  echo "WARNING: file size mismatch for ${WEBSITE_DB_DUMP} after upload to S3.
-  The file has been uploaded, but you should verify it."
+  echo "ERROR: couldn't check file sizes for ${WEBSITE_DB_DUMP}; please verify manually"
+  exit $?
 fi
 
 echo "SUCCESS: Backup complete"
